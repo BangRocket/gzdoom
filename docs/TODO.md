@@ -1,0 +1,142 @@
+# GZDoom Modern Netcode Implementation Todo List
+
+## src/common/network/
+- [x] Define client-server communication structure (network_architecture.h)
+  - [x] Create NetworkManager class to oversee all network operations
+  - [x] Define Client and Server classes with their respective responsibilities
+  - [x] Implement connection handling and management
+- [x] Implement packet creation and handling (packet_handler.cpp)
+  - [x] Define Packet class with serialization and deserialization methods
+  - [x] Implement different packet types (e.g., movement, state update, mod sync)
+  - [x] Create PacketQueue class for managing incoming and outgoing packets
+- [ ] Implement client-side movement prediction (client_prediction.cpp)
+  - [x] Create ClientPrediction class to handle local player movement
+  - [x] Implement input buffering and replay system
+  - [x] Add prediction error correction mechanism
+- [x] Implement server-side state reconciliation (server_reconciliation.cpp)
+  - [x] Create ServerReconciliation class to manage authoritative game state
+  - [x] Implement state comparison and correction system
+  - [x] Add delta compression for efficient state updates
+- [x] Implement smooth entity movement (entity_interpolation.cpp)
+  - [x] Create EntityInterpolator class for managing entity positions
+  - [x] Implement interpolation between received network updates
+  - [x] Add extrapolation for predicting entity positions during packet loss
+- [x] Implement core server functionality (server.cpp)
+  - [x] Create Server class with main update loop
+  - [x] Implement packet processing and client management
+  - [x] Add game state update and synchronization methods
+- [x] Implement data compression techniques (network_compression.cpp)
+  - [x] Create Compressor class with compression and decompression methods
+  - [x] Implement simple run-length encoding compression
+  - [x] Implement delta compression for game state updates
+  - [x] Add Huffman coding for general data compression
+- [x] Develop mod synchronization system (mod_sync.cpp)
+  - [x] Create ModSyncManager class to oversee mod-related network operations
+  - [x] Implement mod data packaging and transmission
+  - [x] Add version checking and compatibility system
+- [x] Implement networking support for ACS and Decorate (acs_network_bridge.cpp)
+  - [x] Create ACSNetworkBridge class to handle ACS script synchronization
+  - [ ] Implement DecorateNetworkHandler for Decorate-specific network operations
+  - [x] Add network-aware functions and properties for ACS
+- [x] Implement networking support for ZScript (zscript_network_bridge.cpp)
+  - [x] Create ZScriptNetworkBridge class to manage ZScript network operations
+  - [x] Implement network-aware ZScript functions and variables
+  - [x] Add synchronization system for ZScript-defined game states
+- [x] Implement game state synchronization system (network_state_manager.cpp)
+  - [x] Create NetworkStateManager class to oversee game state synchronization
+  - [x] Implement delta state updates for efficient transmission
+  - [x] Add state rollback and replay system for handling discrepancies
+- [x] Implement lag compensation techniques (lag_compensation.cpp)
+  - [x] Create LagCompensator class to manage lag compensation
+  - [x] Implement server-side rewind for accurate hit detection
+  - [x] Add client-side lag compensation prediction
+- [x] Implement network security measures (network_security.cpp)
+  - [x] Create SecurityManager class to handle encryption and authentication
+  - [x] Implement anti-cheat measures (e.g., server-side validation)
+  - [x] Add DDoS protection and rate limiting
+- [x] Implement network diagnostics tools (network_diagnostics.cpp)
+  - [x] Create NetworkDiagnostics class for monitoring network performance
+  - [x] Implement logging system for network events and errors
+  - [x] Add in-game network statistics display
+- [x] Develop mod compatibility checking system (mod_compatibility.cpp)
+  - [x] Create ModCompatibilityChecker class to verify mod compatibility
+  - [x] Implement version checking and dependency resolution
+  - [x] Add automatic mod synchronization for multiplayer sessions
+- [x] Create user-friendly networking API for modders (network_api.cpp)
+  - [x] Design and implement NetworkAPI class with easy-to-use functions
+  - [x] Create documentation and examples for modders
+  - [x] Implement safety checks and error handling for mod-created network operations
+- [x] Implement simple networked game state (game_state.cpp)
+  - [x] Define basic networked game state structure
+  - [x] Implement state synchronization between server and clients
+  - [x] Add support for delta updates of game state
+- [x] Optimize network performance
+  - [x] Implement bandwidth estimation and throttling
+  - [x] Add support for adaptive update rates
+  - [x] Optimize message packaging and compression
+- [x] Refine client prediction and server reconciliation
+  - [x] Improve accuracy of client-side prediction
+  - [x] Enhance server reconciliation to handle complex game states
+  - [x] Implement smoothing techniques for correction of prediction errors
+- [x] Implement fallback mode for legacy networking
+  - [x] Create compatibility layer for old network protocol
+  - [x] Implement automatic detection and switching between new and old netcode
+- [x] Implement robust tic-based synchronization system
+- [x] Develop advanced packet sequencing and acknowledgment system
+- [x] Create a dedicated server mode
+- [x] Implement a more comprehensive player management system
+- [x] Implement all packet types from the original code
+- [x] Enhance error handling and logging for network operations
+- [x] Develop a console message system for server-client communication
+- [x] Implement a more detailed game launch and start sequence
+- [x] Create an advanced resend request system for missed packets
+- [x] Enhance network diagnostics with more detailed statistics
+- [x] Implement a more robust compatibility mode for version differences
+- [x] Implement all packet types from the original code
+- [x] Enhance connection state management
+- [x] Improve client-side prediction and server reconciliation
+- [x] Implement comprehensive game settings synchronization
+- [x] Develop robust player name handling system
+- [x] Implement clock synchronization between client and server
+
+## src/common/
+- [x] Integrate new netcode with existing GZDoom codebase
+  - [x] Modify main game loop to use new netcode
+  - [x] Create hooks for network events in relevant game systems
+  - [x] Update existing network-related function calls to use new system
+- [ ] Implement specific network functionality in main game loop
+   - [ ] Add network state synchronization
+   - [ ] Implement client-side prediction
+   - [ ] Add server reconciliation
+- [ ] Ensure compatibility with existing GZDoom features
+  - [ ] Test and adapt netcode to work with all game modes
+  - [ ] Verify compatibility with existing mods and total conversions
+
+## tests/
+- [x] Set up basic testing infrastructure
+  - [x] Create unit tests for core netcode components
+  - [x] Implement integration tests for client-server communication
+  - [x] Develop system tests for full gameplay scenarios
+- [ ] Conduct thorough testing and bug fixing
+  - [ ] Perform extensive playtesting in various network conditions
+  - [ ] Conduct stress tests with high player counts and complex mods
+  - [ ] Test dedicated server functionality
+  - [ ] Address and fix any identified issues or bugs
+- [x] Implement integration tests for client-server communication
+- [x] Develop system tests for full gameplay scenarios
+- [x] Start implementing stress tests for high player counts and complex mods
+- [x] Implement integration tests for legacy mode and modern mode switching
+
+## docs/
+- [ ] Create comprehensive documentation for new netcode
+  - [ ] Write technical documentation for developers
+  - [ ] Create user guide for server operators
+  - [ ] Develop documentation for mod creators
+  - [ ] Document dedicated server setup and management
+- [ ] Begin writing technical documentation for developers
+- [ ] Update existing documentation to reflect new compatibility features
+
+## Next Steps
+- [ ] Begin optimization of network performance
+- [ ] Start refining client prediction and server reconciliation
+- [ ] Begin compatibility testing with existing GZDoom features
