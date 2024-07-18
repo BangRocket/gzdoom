@@ -74,6 +74,7 @@
 #include "v_text.h"
 #include "gi.h"
 #include "a_dynlight.h"
+#include "common/network/network_architecture.h"
 #include "gameconfigfile.h"
 #include "sbar.h"
 #include "decallib.h"
@@ -250,6 +251,12 @@ CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	// No further checks needed. All this changes now is which scene drawer the render backend calls.
 }
 #endif
+
+namespace GZDoom {
+namespace Network {
+NetworkManager g_NetworkManager;
+} // namespace Network
+} // namespace GZDoom
 
 CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 {
@@ -1245,6 +1252,13 @@ void D_DoomLoop ()
 			{
 				TryRunTics (); // will run at least one tic
 			}
+
+			// Update network state
+			GZDoom::Network::g_NetworkManager.Update();
+		
+			// Synchronize network state
+			GZDoom::Network::g_NetworkManager.SynchronizeState();
+		
 			// Update display, next frame, with current state.
 			I_StartTic ();
 			D_ProcessEvents();
@@ -3546,6 +3560,9 @@ static int D_InitGame(const FIWADInfo* iwad_info, std::vector<std::string>& allw
 		UpdateVRModes();
 		Local_Job_Init();
 
+		// Initialize the NetworkManager
+		GZDoom::Network::g_NetworkManager.Initialize();
+
 		v = Args->CheckValue ("-loadgame");
 		if (v)
 		{
@@ -3685,6 +3702,9 @@ static int D_DoomMain_Internal (void)
 	
 	std::set_new_handler(NewFailure);
 	const char *batchout = Args->CheckValue("-errorlog");
+
+	// Initialize the NetworkManager
+	GZDoom::Network::g_NetworkManager.Initialize();
 
 	D_DoomInit();
 	
