@@ -1,5 +1,7 @@
 #include "client.h"
 #include <iostream>
+#include <network_manager.h>
+using namespace GZDoom::Network::NetworkManager;
 
 namespace GZDoom
 {
@@ -33,12 +35,6 @@ namespace GZDoom
             {
                 RequestGameSettings();
             }
-
-            // Update clock synchronization
-            UpdateClockSync();
-
-            // Update clock synchronization
-            UpdateClockSync();
         }
 
         void Client::SendClockSyncRequest()

@@ -6,8 +6,9 @@ namespace GZDoom
 {
     namespace Network
     {
-
         GameState::GameState() : m_lastUpdateTime(0.0) {}
+
+        GameState::~GameState() {}
 
         void GameState::Update(double currentTime)
         {
@@ -94,6 +95,5 @@ namespace GZDoom
                 m_entities[entity.id] = entity;
             }
         }
-
     } // namespace Network
 } // namespace GZDoom

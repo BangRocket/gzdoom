@@ -72,6 +72,13 @@
 #include "d_main.h"
 #include "i_interface.h"
 #include "savegamemanager.h"
+#include "common/network/network_architecture.h"
+
+namespace GZDoom {
+	namespace Network {
+		NetworkManager g_NetworkManager;
+	} // namespace Network
+} // namespace GZDoom
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -407,6 +414,12 @@ int NetbufferSize ()
 		count = 1;
 	}
 
+	// Use delta compression for game state updates
+	if (netbuffer[0])
+	{
+		k += sizeof(uint32_t); // Add space for delta sequence number
+	}
+
 	// Need at least 3 bytes per tic per player
 	if (doomcom.datalength < k + 3 * count * numtics)
 	{
@@ -421,6 +434,14 @@ int NetbufferSize ()
 			SkipTicCmd (&skipper, numtics);
 		}
 	}
+
+	// Add mod synchronization data
+	if (netbuffer[0])
+	{
+		k += sizeof(uint32_t); // Add space for mod sync data size
+		k += *reinterpret_cast<uint32_t*>(&netbuffer[k]); // Add actual mod sync data size
+	}
+
 	return int(skipper - netbuffer);
 }
 
@@ -1075,6 +1096,9 @@ void NetUpdate (void)
 				Net_NewMakeTic ();
 			}
 		}
+
+		// Apply client-side prediction
+		//GZDoom::Network::g_NetworkManager.PredictMovement(localcmds[maketic % LOCALCMDTICS].ucmd, nowtime);
 	}
 
 	if (singletics)
@@ -1258,130 +1282,6 @@ void NetUpdate (void)
 					int localstart, localprev;
 
 					localstart = (start * ticdup) % LOCALCMDTICS;
-					localprev = (prev * ticdup) % LOCALCMDTICS;
-					start %= BACKUPTICS;
-					prev %= BACKUPTICS;
-
-					// The local player has their tics sent first, followed by
-					// the other players.
-					if (l == 0)
-					{
-						WriteInt16 (localcmds[localstart].consistancy, &cmddata);
-						// [RH] Write out special "ticcmds" before real ticcmd
-						if (specials.used[start])
-						{
-							memcpy (cmddata, specials.streams[start], specials.used[start]);
-							cmddata += specials.used[start];
-						}
-						WriteUserCmdMessage (&localcmds[localstart].ucmd,
-							localprev >= 0 ? &localcmds[localprev].ucmd : NULL, &cmddata);
-					}
-					else if (i != 0)
-					{
-						int len;
-						uint8_t *spec;
-
-						WriteInt16 (netcmds[playerbytes[l]][start].consistancy, &cmddata);
-						spec = NetSpecs[playerbytes[l]][start].GetData (&len);
-						if (spec != NULL)
-						{
-							memcpy (cmddata, spec, len);
-							cmddata += len;
-						}
-
-						WriteUserCmdMessage (&netcmds[playerbytes[l]][start].ucmd,
-							prev >= 0 ? &netcmds[playerbytes[l]][prev].ucmd : NULL, &cmddata);
-					}
-				}
-			}
-			HSendPacket (i, int(cmddata - netbuffer));
-		}
-		else
-		{
-			HSendPacket (i, k);
-		}
-	}
-
-	// listen for other packets
-	GetPackets ();
-
-	if (!resendOnly)
-	{
-		// ideally nettics[0] should be 1 - 3 tics above lowtic
-		// if we are consistantly slower, speed up time
-
-		// [RH] I had erroneously assumed frameskip[] had 4 entries
-		// because there were 4 players, but that's not the case at
-		// all. The game is comparing the lag behind the master for
-		// four runs of TryRunTics. If our tic count is ahead of the
-		// master all 4 times, the next run of NetUpdate will not
-		// process any new input. If we have less input than the
-		// master, the next run of NetUpdate will process extra tics
-		// (because gametime gets decremented here).
-
-		// the key player does not adapt
-		if (consoleplayer != Net_Arbitrator)
-		{
-			// I'm not sure about this when using a packet server, because
-			// if left unmodified from the P2P version, it can make the game
-			// very jerky. The way I have it written right now basically means
-			// that it won't adapt. Fortunately, player prediction helps
-			// alleviate the lag somewhat.
-
-			if (NetMode == NET_PeerToPeer)
-			{
-				int totalavg = 0;
-				if (net_ticbalance)
-				{
-					// Try to guess ahead the time it takes to send responses to the slowest node
-					int nodeavg = 0, arbavg = 0;
-
-					for (j = 0; j < BACKUPTICS; j++)
-					{
-						arbavg += netdelay[nodeforplayer[Net_Arbitrator]][j];
-						nodeavg += netdelay[0][j];
-					}
-					arbavg /= BACKUPTICS;
-					nodeavg /= BACKUPTICS;
-
-					// We shouldn't adapt if we are already the arbitrator isn't what we are waiting for, otherwise it just adds more latency
-					if (arbavg > nodeavg)
-					{
-						lastaverage = totalavg = ((arbavg + nodeavg) / 2);
-					}
-					else
-					{
-						// Allow room to guess two tics ahead
-						if (nodeavg > (arbavg + 2) && lastaverage > 0)
-							lastaverage--;
-						totalavg = lastaverage;
-					}
-				}
-					
-				mastertics = nettics[nodeforplayer[Net_Arbitrator]] + totalavg;
-			}
-			if (nettics[0] <= mastertics)
-			{
-				gametime--;
-				if (debugfile) fprintf(debugfile, "-");
-			}
-			if (NetMode != NET_PacketServer)
-			{
-				frameskip[(maketic / ticdup) & 3] = (oldnettics > mastertics);
-			}
-			else
-			{
-				frameskip[(maketic / ticdup) & 3] = (oldnettics - mastertics) > 3;
-			}
-			if (frameskip[0] && frameskip[1] && frameskip[2] && frameskip[3])
-			{
-				skiptics = 1;
-				if (debugfile) fprintf(debugfile, "+");
-			}
-			oldnettics = nettics[0];
-		}
-	}
-}
 
 
 //
@@ -1893,6 +1793,9 @@ void TryRunTics (void)
 	// get available tics
 	NetUpdate ();
 
+	// Update network state
+	GZDoom::Network::g_NetworkManager.Update();
+
 	if (pauseext)
 		return;
 
@@ -2021,6 +1924,18 @@ void TryRunTics (void)
 	else
 	{
 		TicStabilityWait();
+	}
+
+	// Apply client-side prediction
+	if (GZDoom::Network::g_NetworkManager.IsClient())
+	{
+		GZDoom::Network::ClientPrediction::ApplyPrediction();
+	}
+
+	// Apply server-side reconciliation
+	if (GZDoom::Network::g_NetworkManager.IsServer())
+	{
+		GZDoom::Network::ServerReconciliation::ApplyReconciliation();
 	}
 }
 

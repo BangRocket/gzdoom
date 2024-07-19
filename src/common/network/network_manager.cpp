@@ -485,6 +485,31 @@ namespace GZDoom
             return m_securityManager->DecryptData(encryptedData);
         }
 
+        void NetworkManager::SendPacket(const std::vector<uint8_t> &data)
+        {
+            if (m_client && m_connectionState == ConnectionState::Connected)
+            {
+                std::vector<uint8_t> compressedData = CompressData(data);
+                std::vector<uint8_t> encryptedData = EncryptData(compressedData);
+                Packet packet = m_packetHandler->CreatePacket(encryptedData);
+                m_client->SendPacket(packet);
+            }
+        }
+
+        void NetworkManager::ReceivePackets()
+        {
+            if (m_client)
+            {
+                std::vector<Packet> receivedPackets = m_client->ReceivePackets();
+                for (const auto &packet : receivedPackets)
+                {
+                    std::vector<uint8_t> decryptedData = DecryptData(packet.data);
+                    std::vector<uint8_t> decompressedData = DecompressData(decryptedData);
+                    m_packetHandler->ProcessPacket(Packet(packet.sequence, packet.ack, packet.ack_bits, decompressedData));
+                }
+            }
+        }
+
         std::vector<uint8_t> NetworkManager::DecompressData(const std::vector<uint8_t> &compressedData)
         {
             return m_compressor->Decompress(compressedData);

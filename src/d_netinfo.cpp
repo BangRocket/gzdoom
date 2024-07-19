@@ -51,6 +51,13 @@
 #include "vm.h"
 #include "gstrings.h"
 #include "g_game.h"
+#include "common/network/network_architecture.h"
+
+namespace GZDoom {
+	namespace Network {
+		NetworkManager g_NetworkManager;
+	} // namespace Network
+} // namespace GZDoom
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
@@ -939,6 +946,9 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 		}
 	}
 	*stream += strlen (*((char **)stream)) + 1;
+
+	// Update the network state manager with the new user info
+	GZDoom::Network::g_NetworkManager.UpdatePlayerInfo(pnum, *info);
 }
 
 void WriteUserInfo(FSerializer &arc, userinfo_t &info)

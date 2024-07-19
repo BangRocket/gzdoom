@@ -609,6 +609,7 @@ file( GLOB HEADER_FILES
 	common/scripting/interface/*.h
 	common/scripting/backend/*.h
 	common/scripting/frontend/*.h
+	common/network/*.h
 
 	utility/*.h
 	launcher/*.h
@@ -1180,6 +1181,31 @@ set (PCH_SOURCES
 	utility/nodebuilder/nodebuild_utility.cpp
 )
 
+# Add new netcode files
+set(NETWORK_SOURCES
+    common/network/acs_network_bridge.cpp
+	common/network/client.cpp
+    common/network/client_prediction.cpp
+	common/network/entity_interpolation.cpp
+	common/network/game_state.cpp
+	common/network/lag_compensation.cpp
+	common/network/mod_compatibility.cpp
+	common/network/mod_sync.cpp
+	common/network/network_api.cpp
+	common/network/network_architecture.cpp
+	common/network/network_compression.cpp
+	common/network/network_diagnostics.cpp
+	common/network/network_manager.cpp
+	common/network/network_security.cpp
+	common/network/network_simulator.cpp
+	common/network/network_state_manager.cpp
+	common/network/packet_handler.cpp
+	common/network/server.cpp
+    common/network/server_reconciliation.cpp
+	common/network/stress_test_tool.cpp
+    common/network/zscript_network_bridge.cpp
+)
+
 if( ${HAVE_VM_JIT} )
 	set( PCH_SOURCES ${PCH_SOURCES} ${VM_JIT_SOURCES} )
 else()
@@ -1192,6 +1218,7 @@ set( GAME_SOURCES
 	${SYSTEM_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
+	${NETWORK_SOURCES}
 	common/utility/x86.cpp
 	common/thirdparty/strnatcmp.c
 	common/thirdparty/utf8proc/utf8proc.c
@@ -1275,6 +1302,7 @@ include_directories(
 	common/audio/sound
 	common/audio/music
 	common/2d
+	common/network
 	common/cutscenes
 	common/thirdparty/libsmackerdec/include
 	common/thirdparty
@@ -1482,6 +1510,7 @@ source_group("Common\\Audio\\Sound" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_
 source_group("Common\\Audio\\Sound\\Third-party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/sound/thirdparty/.+")
 source_group("Common\\Audio\\Music" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/music.+")
 source_group("Common\\Console" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/console/.+")
+source_group("Common\\Network" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/network/.+")
 source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/utility/.+")
 source_group("Common\\Engine" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/engine/.+")
 source_group("Common\\2D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/2d/.+")

@@ -181,6 +181,48 @@ namespace GZDoom
             // This could involve sending multiple packets of different types
         }
 
+    bool Server::ValidateClientAction(int clientId, const ClientAction &action)
+    {
+        // Implement server-side validation of client actions
+        // This is a basic example and should be expanded based on your game's specific needs
+        
+        // Check if the action is within reasonable bounds
+        if (action.position.x < -1000 || action.position.x > 1000 ||
+            action.position.y < -1000 || action.position.y > 1000 ||
+            action.position.z < -1000 || action.position.z > 1000)
+        {
+            return false;
+        }
+
+        // Check if the player's speed is within acceptable limits
+        float speed = action.velocity.Length();
+        if (speed > MAX_PLAYER_SPEED)
+        {
+            return false;
+        }
+
+        // Add more checks as needed for your game
+
+        return true;
+    }
+
+    void Server::ProcessClientAction(int clientId, const ClientAction &action)
+    {
+        if (ValidateClientAction(clientId, action))
+        {
+            // Apply the action to the game state
+            ApplyClientActionToGameState(clientId, action);
+        }
+        else
+        {
+            // Report suspicious activity
+            m_securityManager.ReportSuspiciousActivity(std::to_string(clientId), "Invalid client action");
+            
+            // Optionally, you can correct the client's state here
+            CorrectClientState(clientId);
+        }
+    }
+
     } // namespace Network
 } // namespace GZDoom
 void Server::ProcessClockSyncRequests()

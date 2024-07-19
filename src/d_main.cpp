@@ -253,9 +253,9 @@ CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 #endif
 
 namespace GZDoom {
-namespace Network {
-NetworkManager g_NetworkManager;
-} // namespace Network
+	namespace Network {
+		NetworkManager g_NetworkManager;
+	} // namespace Network
 } // namespace GZDoom
 
 CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
@@ -1253,12 +1253,18 @@ void D_DoomLoop ()
 				TryRunTics (); // will run at least one tic
 			}
 
-			// Update network state
-			GZDoom::Network::g_NetworkManager.Update();
-		
-			// Synchronize network state
-			GZDoom::Network::g_NetworkManager.SynchronizeState();
-		
+			// Apply client-side prediction
+			if (GZDoom::Network::g_NetworkManager.IsClient())
+			{
+					GZDoom::Network::ClientPrediction::ApplyPrediction();
+			}
+
+			// Apply server-side reconciliation
+			if (GZDoom::Network::g_NetworkManager.IsServer())
+			{
+					GZDoom::Network::ServerReconciliation::ApplyReconciliation();
+			}
+
 			// Update display, next frame, with current state.
 			I_StartTic ();
 			D_ProcessEvents();

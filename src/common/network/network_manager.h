@@ -40,11 +40,19 @@ namespace GZDoom
             void SetCompatibilityMode(bool enabled);
             bool IsCompatibilityModeEnabled() const;
 
+            // New methods
+            bool IsServer() const { return m_server != nullptr; }
+            bool IsClient() const { return m_client != nullptr; }
+            void StartServer(uint16_t port);
+            void ConnectToServer(const std::string &serverAddress, uint16_t port);
+            void DisconnectFromServer();
+            void KickPlayer(int playerId, const std::string &reason);
+            void BroadcastMessage(const std::string &message);
+            void SendPrivateMessage(int playerId, const std::string &message);
+
         private:
             bool m_compatibilityMode;
 
-            void ConnectToServer(const std::string &serverAddress);
-            void DisconnectFromServer();
             void DetectNetworkMode();
             void SwitchToLegacyMode();
             void SwitchToModernMode();
@@ -72,6 +80,7 @@ namespace GZDoom
             std::unique_ptr<LagCompensator> m_lagCompensator;
             std::unique_ptr<SecurityManager> m_securityManager;
             std::unique_ptr<NetworkDiagnostics> m_networkDiagnostics;
+            std::unique_ptr<ModSyncManager> m_modSyncManager;
             std::unordered_map<int, EntityInterpolator> m_entityInterpolators;
             ConnectionState m_connectionState;
 
@@ -82,6 +91,11 @@ namespace GZDoom
             std::vector<uint8_t> DecompressData(const std::vector<uint8_t> &compressedData);
             std::vector<uint8_t> EncryptData(const std::vector<uint8_t> &data);
             std::vector<uint8_t> DecryptData(const std::vector<uint8_t> &encryptedData);
+
+            void SynchronizeClocks();
+            void UpdateClockSync();
+            void ProcessPacketSequencing();
+            void HandlePacketAcknowledgement(uint32_t sequenceNumber);
 
             // Simple networked game state for testing
             struct TestGameState
@@ -95,6 +109,9 @@ namespace GZDoom
 
         private:
             TestGameState m_testGameState;
+            double m_lastClockSyncTime;
+            uint32_t m_nextSequenceNumber;
+            std::unordered_map<uint32_t, Packet> m_unacknowledgedPackets;
         };
 
     } // namespace Network
